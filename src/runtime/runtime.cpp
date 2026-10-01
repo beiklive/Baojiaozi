@@ -22,6 +22,12 @@ RuntimeNode Runtime::BuildNode(const document::Node& node,
     result.properties = node.properties;
     result.bindings = node.bindings;
     result.style = style::ThemeResolver(project_.theme).Resolve(node.type, node.style);
+    if (node.properties.value("fontSize", document::Json()).is_number()) {
+        result.style.fontSize = node.properties.at("fontSize").get<float>();
+    }
+    if (node.properties.value("padding", document::Json()).is_number()) {
+        result.style.padding = node.properties.at("padding").get<float>();
+    }
     const auto animationIt = node.animations.find(preview.event);
     if (animationIt != node.animations.end()) {
         const auto definitionIt = project_.animations.find(animationIt->second);

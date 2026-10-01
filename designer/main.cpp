@@ -3,12 +3,16 @@
 #include "backends/imgui_impl_opengl3.h"
 
 #include "baojiaozi/imgui/renderer.hpp"
+#include "baojiaozi/designer/project_store.hpp"
 #include "baojiaozi/parser/project_loader.hpp"
 #include "baojiaozi/runtime/runtime.hpp"
 
 #include <GLFW/glfw3.h>
 
 #include <filesystem>
+#include <algorithm>
+#include <cstdio>
+#include <functional>
 #include <iostream>
 
 namespace {
@@ -74,9 +78,13 @@ int main() {
         }
     }
     const auto project = projectResult.project;
+    auto editableProject = project;
     baojiaozi::imgui::Renderer renderer;
     std::string previewEvent = "normal";
     float previewTime = 0.0f;
+    std::string activePage = "home";
+    std::string selectedNode;
+    std::string saveMessage;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -86,8 +94,15 @@ int main() {
 
         if (ImGui::BeginMainMenuBar()) {
             if (ImGui::BeginMenu("项目")) {
-                ImGui::MenuItem("打开");
-                ImGui::MenuItem("保存");
+                if (ImGui::MenuItem("保存")) {
+                    if (editableProject) {
+                        std::string error;
+                        const bool saved = baojiaozi::designer::ProjectStore::SavePage(
+                            *editableProject, activePage,
+                            ResourcePath("resources/examples/default_theme"), error);
+                        saveMessage = saved ? "已保存主页" : error;
+                    }
+                }
                 ImGui::MenuItem("退出", "Cmd+Q");
                 ImGui::EndMenu();
             }
@@ -115,15 +130,18 @@ int main() {
         ImGui::BulletText("Button");
         ImGui::Separator();
         ImGui::TextUnformatted("页面列表");
-        if (project) {
-            for (const auto& page : project->pages) {
-                ImGui::Selectable(page.title.c_str(), page.id == "home");
+        if (editableProject) {
+            for (const auto& page : editableProject->pages) {
+                if (ImGui::Selectable(page.title.c_str(), page.id == activePage)) {
+                    activePage = page.id;
+                    selectedNode.clear();
+                }
             }
         }
         ImGui::EndChild();
 
         ImGui::SameLine();
-        ImGui::BeginChild("preview_panel", ImVec2(0.0f, 0.0f), true);
+        ImGui::BeginChild("preview_panel", ImVec2(-260.0f, 0.0f), true);
         ImGui::TextUnformatted("即时渲染预览");
         ImGui::TextUnformatted("当前页面：主页");
         if (ImGui::Button("普通")) {
@@ -146,14 +164,52 @@ int main() {
         const ImVec2 previewOrigin = ImGui::GetCursorScreenPos();
         const ImVec2 previewSize = ImGui::GetContentRegionAvail();
         ImGui::InvisibleButton("preview_surface", previewSize);
-        if (project) {
-            baojiaozi::runtime::Runtime runtime(*project);
+        if (editableProject) {
+            baojiaozi::runtime::Runtime runtime(*editableProject);
             if (previewEvent != "normal") previewTime += ImGui::GetIO().DeltaTime;
             const auto view = runtime.BuildPage(
-                "home", {0.0f, 0.0f, previewSize.x, previewSize.y},
+                activePage, {0.0f, 0.0f, previewSize.x, previewSize.y},
                 {previewEvent, previewTime});
             renderer.Render(view.root, previewOrigin);
         }
+        ImGui::EndChild();
+
+        ImGui::SameLine();
+        ImGui::BeginChild("inspector_panel", ImVec2(0.0f, 0.0f), true);
+        ImGui::TextUnformatted("属性检查器");
+        ImGui::Text("选中节点: %s", selectedNode.empty() ? "无" : selectedNode.c_str());
+        if (editableProject) {
+            auto pageIt = std::find_if(editableProject->pages.begin(), editableProject->pages.end(),
+                                       [&](const auto& page) { return page.id == activePage; });
+            if (pageIt != editableProject->pages.end()) {
+                std::function<void(baojiaozi::document::Node&)> drawNode;
+                drawNode = [&](baojiaozi::document::Node& node) {
+                    if (ImGui::Selectable((node.id + " (" + baojiaozi::document::ToString(node.type) + ")").c_str(),
+                                          selectedNode == node.id)) {
+                        selectedNode = node.id;
+                    }
+                    for (auto& child : node.children) drawNode(child);
+                };
+                drawNode(pageIt->root);
+
+                std::function<baojiaozi::document::Node*(baojiaozi::document::Node&)> findNode;
+                findNode = [&](baojiaozi::document::Node& node) -> baojiaozi::document::Node* {
+                    if (node.id == selectedNode) return &node;
+                    for (auto& child : node.children) if (auto* found = findNode(child)) return found;
+                    return nullptr;
+                };
+                if (auto* node = findNode(pageIt->root)) {
+                    ImGui::Separator();
+                    char textBuffer[256] = {};
+                    const auto currentText = node->properties.value("text", std::string{});
+                    std::snprintf(textBuffer, sizeof(textBuffer), "%s", currentText.c_str());
+                    if (ImGui::InputText("文本", textBuffer, sizeof(textBuffer))) node->properties["text"] = textBuffer;
+                    int fontSize = node->properties.value("fontSize", 18);
+                    if (ImGui::InputInt("字号", &fontSize)) node->properties["fontSize"] = fontSize;
+                }
+            }
+        }
+        if (!saveMessage.empty()) ImGui::TextWrapped("%s", saveMessage.c_str());
         ImGui::EndChild();
         ImGui::End();
 

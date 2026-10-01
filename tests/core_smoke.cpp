@@ -1,6 +1,7 @@
 #include "baojiaozi/parser/project_loader.hpp"
 #include "baojiaozi/runtime/runtime.hpp"
 #include "baojiaozi/animation/player.hpp"
+#include "baojiaozi/designer/project_store.hpp"
 #include "baojiaozi/version.hpp"
 
 #include <cassert>
@@ -79,6 +80,9 @@ int main() {
     assert(view.root.bounds.width == 800.0f);
     assert(view.root.children.front().bounds.width == 800.0f);
     assert(view.root.children.front().bounds.height == 32.0f);
+    std::string saveError;
+    assert(baojiaozi::designer::ProjectStore::SavePage(*result.project, "home", root, saveError));
+    assert(std::filesystem::is_regular_file(root / "pages/home.json"));
 
     WriteFile(root / "pages/broken.json", R"({"id":"broken","root":{"id":"bad","type":"not_a_control"}})");
     const auto broken = loader.LoadDirectory(root);

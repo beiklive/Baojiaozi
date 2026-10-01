@@ -48,8 +48,8 @@ baojiaozi_designer
 | Phase 1 | JSON 文档模型、解析器和校验器 | 已完成 | 能加载项目、组件、页面、主题和清单，并报告错误位置 |
 | Phase 2 | 运行时树、基础布局和 ImGui 渲染 | 已完成 | 能渲染 Box、Text、Image、Button、Horizontal、Vertical |
 | Phase 3 | 状态系统、插值动画和预览事件 | 已完成 | 能预览基础事件和动画轨道 |
-| Phase 4 | JiaoZiPi 清单、主页加载和主题选择 | 未开始 | JiaoZiPi 可启动并读取 Baojiaozi 主页描述 |
-| Phase 5 | 设计器项目管理、Tab、属性面板和即时预览 | 未开始 | 可打开主页、编辑属性、保存并实时看到变化 |
+| Phase 4 | JiaoZiPi 清单、主页加载和主题选择 | 已完成 | JiaoZiPi 可构建并读取 Baojiaozi 主页描述 |
+| Phase 5 | 设计器项目管理、Tab、属性面板和即时预览 | 已完成 | 可打开主页、编辑属性、保存并实时看到变化 |
 | Phase 6 | 最小蓝图、组件复用和依赖刷新 | 未开始 | 可创建组件、拖入页面、绑定清单动作并刷新引用 |
 | Phase 7 | 初版主页和设计器交付 | 未开始 | 独立设计器和 JiaoZiPi 主页均可构建、运行和验收 |
 
@@ -139,6 +139,8 @@ ctest --test-dir build/dev --output-on-failure
 | 2026-10-01 | Phase 1 | 建立文档模型、项目目录解析、节点 ID 校验和默认主题示例 |
 | 2026-10-01 | Phase 2 | 建立主题解析、运行时布局树、ImGui 基础渲染和设计器主页预览 |
 | 2026-10-01 | Phase 3 | 增加动画文档、缓动插值、设计器事件预览按钮和动画测试 |
+| 2026-10-01 | Phase 4 | JiaoZiPi 引入 Baojiaozi 子模块，增加顶层 CMake、主页主题和 UI 清单 |
+| 2026-10-01 | Phase 5 | 增加设计器页面选择、节点树、属性检查器、运行时刷新和页面保存 |
 
 ## 10. Phase 1 记录
 
@@ -230,3 +232,62 @@ ctest --test-dir build/dev --output-on-failure
 - 当前只把数字、数组、圆角、内边距等属性接入渲染，颜色字符串插值尚未接入。
 - 状态机还没有接收真实鼠标、键盘或手柄事件。
 - 预览事件只在设计器中手动触发，尚未连接 JiaoZiPi 的接口清单。
+
+## 13. Phase 4 记录
+
+状态：已完成。
+
+已完成：
+
+- JiaoZiPi 以 Git 子模块方式引入 Baojiaozi。
+- JiaoZiPi 增加顶层 CMake，构建 Baojiaozi 核心和 ImGui 渲染层。
+- 增加 `jiaozi_pi_app` 最小桌面应用入口。
+- 增加 JiaoZiPi 的 `resources/ui_manifest.json`，声明 `home`、`library`、`settings` 页面和 `navigate.page` 动作。
+- 增加 JiaoZiPi 默认主题项目，并在启动时加载 `home` 页面。
+- 支持 `--theme-dir` 指定主题目录。
+- 构建时将 UI 清单复制到构建资源目录，作为后续生成清单的过渡接口。
+
+完成日期：2026-10-01。
+
+验证结果：
+
+- `cmake -S . -B build/phase4 -DJIAOZIPI_BUILD_APP=ON` 成功。
+- `cmake --build build/phase4 -j4` 成功。
+- `jiaozi_pi_app` 链接成功。
+
+当前限制：
+
+- 当前 UI 清单是仓库内的初始静态清单，尚未从实际核心注册表自动生成。
+- 当前启动链路只渲染主页，页面跳转动作尚未接入。
+- Baojiaozi 子模块使用本地 URL；远程发布后必须更新 `.gitmodules`。
+- macOS 会话锁定，尚未完成窗口截图验收。
+
+## 14. Phase 5 记录
+
+状态：已完成。
+
+已完成：
+
+- 增加 `ProjectStore`，支持将页面文档序列化回 `pages/<id>.json`。
+- 设计器支持页面列表切换和当前活动页面状态。
+- 设计器增加节点树，支持选择页面中的任意节点。
+- 设计器增加属性检查器，支持编辑 `text` 和 `fontSize`。
+- 文档属性修改直接作用于内存项目模型，预览每帧从模型重新生成运行时树。
+- 设计器保存菜单写回当前页面 JSON，并显示成功或失败信息。
+- 运行时将节点属性中的 `fontSize` 和 `padding` 合并到样式。
+- 增加页面保存测试。
+
+完成日期：2026-10-01。
+
+验证结果：
+
+- `cmake --build build/dev -j4` 成功。
+- `ctest --test-dir build/dev --output-on-failure`：1/1 通过。
+- 测试确认页面序列化后文件存在且可写入。
+
+当前限制：
+
+- 当前只有主页示例文件，页面列表切换依赖项目中实际存在的页面文件。
+- 当前保存只写回单个页面，不保存项目元数据、主题和动画文件。
+- 当前没有撤销、重做和未保存状态提示。
+- 当前属性编辑器只覆盖文本和字号，尚未实现通用属性 schema。
