@@ -47,7 +47,7 @@ baojiaozi_designer
 | Phase 0 | 仓库、依赖、构建和文档基线 | 进行中 | CMake 可配置，ImGui/GLFW 子模块存在，字体可被定位 |
 | Phase 1 | JSON 文档模型、解析器和校验器 | 已完成 | 能加载项目、组件、页面、主题和清单，并报告错误位置 |
 | Phase 2 | 运行时树、基础布局和 ImGui 渲染 | 已完成 | 能渲染 Box、Text、Image、Button、Horizontal、Vertical |
-| Phase 3 | 状态系统、插值动画和预览事件 | 未开始 | 能预览 normal/focused/pressed/disabled 和五类动画触发 |
+| Phase 3 | 状态系统、插值动画和预览事件 | 已完成 | 能预览基础事件和动画轨道 |
 | Phase 4 | JiaoZiPi 清单、主页加载和主题选择 | 未开始 | JiaoZiPi 可启动并读取 Baojiaozi 主页描述 |
 | Phase 5 | 设计器项目管理、Tab、属性面板和即时预览 | 未开始 | 可打开主页、编辑属性、保存并实时看到变化 |
 | Phase 6 | 最小蓝图、组件复用和依赖刷新 | 未开始 | 可创建组件、拖入页面、绑定清单动作并刷新引用 |
@@ -138,6 +138,7 @@ ctest --test-dir build/dev --output-on-failure
 | 2026-10-01 | Phase 0 | 创建 Baojiaozi 仓库，加入 ImGui 和 GLFW 子模块，建立开发文档 |
 | 2026-10-01 | Phase 1 | 建立文档模型、项目目录解析、节点 ID 校验和默认主题示例 |
 | 2026-10-01 | Phase 2 | 建立主题解析、运行时布局树、ImGui 基础渲染和设计器主页预览 |
+| 2026-10-01 | Phase 3 | 增加动画文档、缓动插值、设计器事件预览按钮和动画测试 |
 
 ## 10. Phase 1 记录
 
@@ -200,3 +201,32 @@ ctest --test-dir build/dev --output-on-failure
 - Button 当前只绘制视觉外观，没有输入事件和状态切换。
 - 当前布局不支持滚动、弧形容器、尺寸约束和响应式断点。
 - 设计器窗口的人工截图验收因当前 macOS 会话处于锁定状态未完成，构建和运行时测试已通过。
+
+## 12. Phase 3 记录
+
+状态：已完成。
+
+已完成：
+
+- 增加 `AnimationDocument`、`AnimationTrack` 和 `AnimationKeyframe` 数据模型。
+- 支持从 `animations/*.json` 读取动画定义，并校验持续时间、轨道和关键帧。
+- 实现 linear、step、cubicIn、cubicOut 和 cubicInOut 缓动。
+- 实现数字和数组值的关键帧插值。
+- 运行时根据节点的动画引用和预览事件覆盖视觉属性。
+- 设计器增加“普通”“聚焦”“触发”预览按钮和运行时间显示。
+- 增加 `button_focus` 和 `button_trigger` 示例动画。
+- 增加动画加载和插值测试。
+
+完成日期：2026-10-01。
+
+验证结果：
+
+- `cmake --build build/dev -j4` 成功。
+- `ctest --test-dir build/dev --output-on-failure`：1/1 通过。
+- 测试确认 `cubicOut` 在中间时间点产生非线性插值结果。
+
+当前限制：
+
+- 当前只把数字、数组、圆角、内边距等属性接入渲染，颜色字符串插值尚未接入。
+- 状态机还没有接收真实鼠标、键盘或手柄事件。
+- 预览事件只在设计器中手动触发，尚未连接 JiaoZiPi 的接口清单。

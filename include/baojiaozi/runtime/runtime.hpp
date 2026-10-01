@@ -31,15 +31,22 @@ struct PageView {
     RuntimeNode root;
 };
 
+struct PreviewRequest {
+    std::string event = "normal";
+    float timeSeconds = 0.0f;
+};
+
 class Runtime {
 public:
     explicit Runtime(const document::ProjectDocument& project) : project_(project) {}
 
     [[nodiscard]] PageView BuildPage(const std::string& pageId,
-                                      Rect viewport = {0.0f, 0.0f, 1000.0f, 700.0f}) const;
+                                      Rect viewport = {0.0f, 0.0f, 1000.0f, 700.0f},
+                                      PreviewRequest preview = {}) const;
 
 private:
-    [[nodiscard]] RuntimeNode BuildNode(const document::Node& node) const;
+    [[nodiscard]] RuntimeNode BuildNode(const document::Node& node,
+                                        const PreviewRequest& preview) const;
     void Layout(RuntimeNode& node, Rect bounds) const;
 
     const document::ProjectDocument& project_;

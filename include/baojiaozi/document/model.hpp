@@ -3,6 +3,7 @@
 #include <nlohmann/json.hpp>
 
 #include <map>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -59,6 +60,23 @@ struct ManifestDocument {
     Json states = Json::array();
 };
 
+struct AnimationKeyframe {
+    float time = 0.0f;
+    Json value;
+};
+
+struct AnimationTrack {
+    std::string property;
+    std::string easing = "linear";
+    std::vector<AnimationKeyframe> keyframes;
+};
+
+struct AnimationDocument {
+    std::string id;
+    float duration = 0.0f;
+    std::vector<AnimationTrack> tracks;
+};
+
 struct ProjectDocument {
     int schemaVersion = 1;
     std::string projectId;
@@ -68,6 +86,7 @@ struct ProjectDocument {
     std::string manifestHash;
     ThemeDocument theme;
     ManifestDocument manifest;
+    std::map<std::string, AnimationDocument> animations;
     std::vector<ComponentDocument> components;
     std::vector<PageDocument> pages;
 };

@@ -1,0 +1,15 @@
+{
+  "id": "button_trigger",
+  "duration": 0.24,
+  "tracks": [
+    {
+      "property": "cornerRadius",
+      "easing": "cubicInOut",
+      "keyframes": [
+        {"time": 0.0, "value": 6.0},
+        {"time": 0.08, "value": 2.0},
+        {"time": 0.24, "value": 6.0}
+      ]
+    }
+  ]
+}

@@ -75,6 +75,8 @@ int main() {
     }
     const auto project = projectResult.project;
     baojiaozi::imgui::Renderer renderer;
+    std::string previewEvent = "normal";
+    float previewTime = 0.0f;
 
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
@@ -124,14 +126,32 @@ int main() {
         ImGui::BeginChild("preview_panel", ImVec2(0.0f, 0.0f), true);
         ImGui::TextUnformatted("即时渲染预览");
         ImGui::TextUnformatted("当前页面：主页");
+        if (ImGui::Button("普通")) {
+            previewEvent = "normal";
+            previewTime = 0.0f;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("聚焦")) {
+            previewEvent = "focus";
+            previewTime = 0.0f;
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("触发")) {
+            previewEvent = "trigger";
+            previewTime = 0.0f;
+        }
+        ImGui::SameLine();
+        ImGui::Text("事件: %s  时间: %.2fs", previewEvent.c_str(), previewTime);
         ImGui::Separator();
         const ImVec2 previewOrigin = ImGui::GetCursorScreenPos();
         const ImVec2 previewSize = ImGui::GetContentRegionAvail();
         ImGui::InvisibleButton("preview_surface", previewSize);
         if (project) {
             baojiaozi::runtime::Runtime runtime(*project);
+            if (previewEvent != "normal") previewTime += ImGui::GetIO().DeltaTime;
             const auto view = runtime.BuildPage(
-                "home", {0.0f, 0.0f, previewSize.x, previewSize.y});
+                "home", {0.0f, 0.0f, previewSize.x, previewSize.y},
+                {previewEvent, previewTime});
             renderer.Render(view.root, previewOrigin);
         }
         ImGui::EndChild();

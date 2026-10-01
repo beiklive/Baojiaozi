@@ -1,0 +1,22 @@
+{
+  "id": "button_focus",
+  "duration": 0.18,
+  "tracks": [
+    {
+      "property": "cornerRadius",
+      "easing": "cubicOut",
+      "keyframes": [
+        {"time": 0.0, "value": 6.0},
+        {"time": 0.18, "value": 10.0}
+      ]
+    },
+    {
+      "property": "padding",
+      "easing": "cubicOut",
+      "keyframes": [
+        {"time": 0.0, "value": 0.0},
+        {"time": 0.18, "value": 3.0}
+      ]
+    }
+  ]
+}

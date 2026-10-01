@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <limits>
 #include <set>
 
 namespace baojiaozi::parser {
@@ -257,6 +258,67 @@ ProjectLoadResult ProjectLoader::LoadJson(const Json& projectJson,
             auto parsedRoot = ParseNode(*root, file.string(), "/root", diagnostics);
             if (!parsedRoot) continue;
             project.pages.push_back({*id, value->value("title", *id), std::move(*parsedRoot)});
+        }
+    }
+
+    const auto animationsDirectory = baseDirectory / "animations";
+    if (std::filesystem::exists(animationsDirectory)) {
+        std::vector<std::filesystem::path> files;
+        for (const auto& entry : std::filesystem::directory_iterator(animationsDirectory)) {
+            if (entry.is_regular_file() && entry.path().extension() == ".json") files.push_back(entry.path());
+        }
+        std::sort(files.begin(), files.end());
+        for (const auto& file : files) {
+            auto value = ReadJsonFile(file, diagnostics);
+            if (!value || !value->is_object()) continue;
+            const auto id = RequiredString(*value, "id", file.string(), "", diagnostics);
+            if (!id) continue;
+            document::AnimationDocument animation;
+            animation.id = *id;
+            if (!value->contains("duration") || !value->at("duration").is_number()) {
+                Error(diagnostics, file.string(), "/duration", "必须是数字");
+                continue;
+            }
+            animation.duration = value->at("duration").get<float>();
+            if (animation.duration < 0.0f) {
+                Error(diagnostics, file.string(), "/duration", "不能为负数");
+                continue;
+            }
+            if (!value->contains("tracks") || !value->at("tracks").is_array()) {
+                Error(diagnostics, file.string(), "/tracks", "必须是数组");
+                continue;
+            }
+            for (std::size_t trackIndex = 0; trackIndex < value->at("tracks").size(); ++trackIndex) {
+                const auto& trackJson = value->at("tracks").at(trackIndex);
+                const auto trackPath = "/tracks/" + std::to_string(trackIndex);
+                if (!trackJson.is_object()) {
+                    Error(diagnostics, file.string(), trackPath, "动画轨道必须是对象");
+                    continue;
+                }
+                const auto property = RequiredString(trackJson, "property", file.string(), trackPath, diagnostics);
+                if (!property || !trackJson.contains("keyframes") || !trackJson.at("keyframes").is_array()) {
+                    if (!trackJson.contains("keyframes")) Error(diagnostics, file.string(), trackPath + "/keyframes", "必须是数组");
+                    continue;
+                }
+                document::AnimationTrack track;
+                track.property = *property;
+                track.easing = trackJson.value("easing", "linear");
+                for (std::size_t keyIndex = 0; keyIndex < trackJson.at("keyframes").size(); ++keyIndex) {
+                    const auto& key = trackJson.at("keyframes").at(keyIndex);
+                    const auto keyPath = trackPath + "/keyframes/" + std::to_string(keyIndex);
+                    if (!key.is_object() || !key.contains("time") || !key.at("time").is_number() || !key.contains("value")) {
+                        Error(diagnostics, file.string(), keyPath, "关键帧必须包含数字 time 和 value");
+                        continue;
+                    }
+                    auto& keyframe = track.keyframes.emplace_back();
+                    keyframe.time = key.at("time").get<float>();
+                    keyframe.value = key.at("value");
+                }
+                std::sort(track.keyframes.begin(), track.keyframes.end(),
+                          [](const auto& left, const auto& right) { return left.time < right.time; });
+                animation.tracks.push_back(std::move(track));
+            }
+            project.animations[animation.id] = std::move(animation);
         }
     }
 

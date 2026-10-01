@@ -1,5 +1,6 @@
 #include "baojiaozi/parser/project_loader.hpp"
 #include "baojiaozi/runtime/runtime.hpp"
+#include "baojiaozi/animation/player.hpp"
 #include "baojiaozi/version.hpp"
 
 #include <cassert>
@@ -39,6 +40,16 @@ int main() {
         "actions": [],
         "states": []
     })");
+    std::filesystem::create_directories(root / "animations");
+    WriteFile(root / "animations/fade.json", R"({
+        "id": "fade",
+        "duration": 1.0,
+        "tracks": [{
+            "property": "opacity",
+            "easing": "cubicOut",
+            "keyframes": [{"time": 0.0, "value": 0.0}, {"time": 1.0, "value": 1.0}]
+        }]
+    })");
     WriteFile(root / "pages/home.json", R"({
         "id": "home",
         "title": "主页",
@@ -58,6 +69,10 @@ int main() {
     assert(result.project->projectId == "smoke");
     assert(result.project->pages.size() == 1);
     assert(result.project->pages.front().root.children.size() == 2);
+    assert(result.project->animations.contains("fade"));
+    const auto values = baojiaozi::animation::Player::Evaluate(
+        result.project->animations.at("fade"), 0.5f);
+    assert(values.at("opacity").get<float>() > 0.5f);
 
     baojiaozi::runtime::Runtime runtime(*result.project);
     const auto view = runtime.BuildPage("home", {0.0f, 0.0f, 800.0f, 500.0f});
