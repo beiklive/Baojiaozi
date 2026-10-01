@@ -44,7 +44,7 @@ baojiaozi_designer
 
 | 阶段 | 目标 | 状态 | 完成标准 |
 |---|---|---|---|
-| Phase 0 | 仓库、依赖、构建和文档基线 | 进行中 | CMake 可配置，ImGui/GLFW 子模块存在，字体可被定位 |
+| Phase 0 | 仓库、依赖、构建和文档基线 | 已完成 | CMake 可配置，ImGui/GLFW 子模块存在，字体可被定位 |
 | Phase 1 | JSON 文档模型、解析器和校验器 | 已完成 | 能加载项目、组件、页面、主题和清单，并报告错误位置 |
 | Phase 2 | 运行时树、基础布局和 ImGui 渲染 | 已完成 | 能渲染 Box、Text、Image、Button、Horizontal、Vertical |
 | Phase 3 | 状态系统、插值动画和预览事件 | 已完成 | 能预览基础事件和动画轨道 |
@@ -64,6 +64,7 @@ baojiaozi_designer
   theme.json
   components/*.json
   pages/*.json
+  pages/*.blueprint.json
   animations/*.json
   assets/
 ```
@@ -143,6 +144,8 @@ ctest --test-dir build/dev --output-on-failure
 | 2026-10-01 | Phase 5 | 增加设计器页面选择、节点树、属性检查器、运行时刷新和页面保存 |
 | 2026-10-01 | Phase 7 | 完成初版主页和设计器交付验收，Phase 6 进入后续迭代 |
 | 2026-10-01 | Phase 6 | 按新语义改为控件/状态/属性蓝图，自绘网格节点画布，预览和蓝图改为上下分区 |
+| 2026-10-02 | Phase 6A | 增加独立蓝图 JSON 格式、解析/序列化、结构校验和保存入口 |
+| 2026-10-02 | Phase 6B | 增加蓝图画布平移、缩放、节点拖动、端口连线、选中删除和位置恢复 |
 
 ## 10. Phase 1 记录
 
@@ -310,13 +313,73 @@ ctest --test-dir build/dev --output-on-failure
 - 页面 JSON 支持 `states` 对象；预览 `focus`、`trigger`、`focus_out` 时应用 `focused`、`triggered`、`blurred` 状态覆盖。
 - 增加多子控件、状态/属性节点数量和关系类型测试。
 
+### Phase 6A：蓝图文档格式
+
+状态：已完成。
+
+已完成：
+
+- `BlueprintDocument` 增加 `schemaVersion` 和 `pageId`，蓝图文件保存为 `pages/<pageId>.blueprint.json`。
+- 增加 `ParseBlueprint`、`SerializeBlueprint` 和 `BlueprintLoader::LoadFile`。
+- 校验节点 ID 唯一性、节点类型、控件类型、节点位置有限性、状态/属性归属关系和连接端点。
+- 校验控件父子连接只能形成有向无环结构，拒绝重复连接和不匹配的连接类型。
+- `ProjectStore::SaveBlueprint` 在写文件前执行完整校验。
+- 设计器保存菜单同时写入页面 JSON 和蓝图 JSON。
+
+完成日期：2026-10-02。
+
+验证命令：
+
+```bash
+cmake --build build/dev -j4
+ctest --test-dir build/dev --output-failure
+```
+
+验证结果：构建成功，核心测试 1/1 通过；测试覆盖蓝图 JSON 往返、文件保存、重复节点 ID 和父子循环拒绝。
+
+当前限制：
+
+- 蓝图首次打开仍由页面树自动生成，已有蓝图文件会优先恢复。
+- 蓝图修改尚未反向编译为页面节点树；当前页面 JSON 仍是运行时的唯一来源。
+- 组件依赖图、属性编辑和撤销/重做留在后续阶段。
+
+### Phase 6B：蓝图交互画布
+
+状态：已完成。
+
+已完成：
+
+- 蓝图画布支持中键平移和滚轮缩放，缩放以鼠标位置为中心保持视图稳定。
+- 节点支持左键选择和拖动，节点位置写入 `BlueprintDocument`。
+- 控件节点可以连接控件子节点或状态节点；状态节点可以连接属性节点。
+- 连线创建前执行节点类型、端口方向和重复连接校验，非法连线不会写入文档。
+- 连线支持选中和删除；节点删除会同时移除其下游节点和相关连线，避免生成孤立状态/属性节点。
+- 设计器启动时优先读取当前页面的 `.blueprint.json`，文件不存在或校验失败时从页面树重新生成。
+- 设计器保存菜单将当前蓝图位置和连线写回独立蓝图文件。
+
+完成日期：2026-10-02。
+
+验证命令：
+
+```bash
+cmake --build build/dev -j4
+ctest --test-dir build/dev --output-on-failure
+```
+
+验证结果：设计器目标构建成功，核心测试 1/1 通过，`git diff --check` 无格式错误。
+
+当前限制：
+
+- 蓝图编辑结果尚未反向编译到页面节点树，运行时预览仍以页面 JSON 为来源。
+- 画布尚未提供节点创建、端口类型提示和撤销/重做。
+- 组件实例、依赖刷新和通用属性编辑器留在后续阶段。
+
 尚未完成：
 
 - 组件文件格式已经由 Phase 1 的 `components/*.json` 预留。
 - 节点 `bindings` 已保留结构化数据。
 - `manifest.snapshot.json` 已提供动作清单输入。
 
-- 蓝图节点拖动和连线编辑。
 - 组件引用节点和依赖刷新。
 - 动作端口、参数校验和运行时调用。
 - 属性节点目前只读展示，尚未从蓝图直接编辑 JSON。

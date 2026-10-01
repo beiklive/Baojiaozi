@@ -34,4 +34,33 @@ bool ProjectStore::SavePage(const document::ProjectDocument& project,
     return false;
 }
 
+bool ProjectStore::SaveBlueprint(const BlueprintDocument& blueprint,
+                                 const std::filesystem::path& directory,
+                                 std::string& error) {
+    const auto diagnostics = ValidateBlueprint(blueprint);
+    if (!diagnostics.empty()) {
+        error = diagnostics.front().path + ": " + diagnostics.front().message;
+        return false;
+    }
+    const auto pagesDirectory = directory / "pages";
+    std::error_code filesystemError;
+    std::filesystem::create_directories(pagesDirectory, filesystemError);
+    if (filesystemError) {
+        error = filesystemError.message();
+        return false;
+    }
+    const auto output = pagesDirectory / (blueprint.pageId + ".blueprint.json");
+    std::ofstream stream(output);
+    if (!stream) {
+        error = "无法写入 " + output.string();
+        return false;
+    }
+    stream << SerializeBlueprint(blueprint).dump(2) << '\n';
+    if (!stream.good()) {
+        error = "写入失败: " + output.string();
+        return false;
+    }
+    return true;
+}
+
 } // namespace baojiaozi::designer

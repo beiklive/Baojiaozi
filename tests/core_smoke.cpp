@@ -110,6 +110,28 @@ int main() {
     assert(stateCount == 3);
     assert(propertyCount == 4);
 
+    const auto pageBlueprint = baojiaozi::designer::BuildBlueprint(result.project->pages.front());
+    const auto blueprintJson = baojiaozi::designer::SerializeBlueprint(pageBlueprint);
+    const auto parsedBlueprint = baojiaozi::designer::ParseBlueprint(blueprintJson, "roundtrip");
+    assert(parsedBlueprint.Succeeded());
+    assert(parsedBlueprint.document->pageId == "home");
+    assert(parsedBlueprint.document->nodes.size() == pageBlueprint.nodes.size());
+    assert(parsedBlueprint.document->links.size() == pageBlueprint.links.size());
+    assert(baojiaozi::designer::ProjectStore::SaveBlueprint(pageBlueprint, root, saveError));
+    assert(std::filesystem::is_regular_file(root / "pages/home.blueprint.json"));
+    const auto loadedBlueprint = baojiaozi::designer::BlueprintLoader().LoadFile(
+        root / "pages/home.blueprint.json");
+    assert(loadedBlueprint.Succeeded());
+    assert(loadedBlueprint.document->pageId == "home");
+
+    auto invalidBlueprint = pageBlueprint;
+    invalidBlueprint.nodes.push_back(invalidBlueprint.nodes.front());
+    assert(!baojiaozi::designer::ValidateBlueprint(invalidBlueprint).empty());
+
+    auto cyclicBlueprint = pageBlueprint;
+    cyclicBlueprint.links.push_back({"title", "root", baojiaozi::designer::BlueprintLinkKind::Child});
+    assert(!baojiaozi::designer::ValidateBlueprint(cyclicBlueprint).empty());
+
     WriteFile(root / "pages/broken.json", R"({"id":"broken","root":{"id":"bad","type":"not_a_control"}})");
     const auto broken = loader.LoadDirectory(root);
     assert(!broken.Succeeded());
