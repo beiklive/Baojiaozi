@@ -15,11 +15,14 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/glfw EXCLUDE_FROM_ALL)
 
 add_library(baojiaozi_core STATIC
+    src/document/model.cpp
+    src/parser/project_loader.cpp
     src/version.cpp
 )
 target_include_directories(baojiaozi_core
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
 )
 
 add_library(baojiaozi_imgui STATIC

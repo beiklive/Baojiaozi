@@ -1,0 +1,19 @@
+{
+  "tokens": {
+    "color.background": "#15171B",
+    "color.surface": "#22262D",
+    "color.primary": "#4A90E2",
+    "color.text": "#F5F7FA",
+    "color.muted": "#9AA4B2",
+    "spacing.medium": 16,
+    "font.default": "switch_font.ttf",
+    "font.icon": "MaterialIcons-Regular.ttf"
+  },
+  "styles": {
+    "button.primary": {
+      "background": "$color.primary",
+      "textColor": "$color.text",
+      "cornerRadius": 6
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "id": "home",
+  "title": "主页",
+  "root": {
+    "id": "home_root",
+    "type": "vertical",
+    "properties": {"padding": 32, "gap": 16},
+    "children": [
+      {
+        "id": "home_title",
+        "type": "text",
+        "properties": {"text": "JiaoZiPi", "fontSize": 32},
+        "style": "text.title"
+      },
+      {
+        "id": "home_subtitle",
+        "type": "text",
+        "properties": {"text": "多核心模拟器前端", "fontSize": 18},
+        "style": "text.subtitle"
+      },
+      {
+        "id": "open_library",
+        "type": "button",
+        "properties": {"text": "游戏库"},
+        "style": "button.primary",
+        "bindings": {
+          "onTrigger": {"action": "navigate.page", "pageId": "library"}
+        },
+        "animations": {
+          "focus": "button_focus",
+          "trigger": "button_trigger"
+        }
+      }
+    ]
+  }
+}

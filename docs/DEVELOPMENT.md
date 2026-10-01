@@ -45,7 +45,7 @@ baojiaozi_designer
 | 阶段 | 目标 | 状态 | 完成标准 |
 |---|---|---|---|
 | Phase 0 | 仓库、依赖、构建和文档基线 | 进行中 | CMake 可配置，ImGui/GLFW 子模块存在，字体可被定位 |
-| Phase 1 | JSON 文档模型、解析器和校验器 | 未开始 | 能加载项目、组件、页面、主题和清单，并报告错误位置 |
+| Phase 1 | JSON 文档模型、解析器和校验器 | 已完成 | 能加载项目、组件、页面、主题和清单，并报告错误位置 |
 | Phase 2 | 运行时树、基础布局和 ImGui 渲染 | 未开始 | 能渲染 Box、Text、Image、Button、Horizontal、Vertical |
 | Phase 3 | 状态系统、插值动画和预览事件 | 未开始 | 能预览 normal/focused/pressed/disabled 和五类动画触发 |
 | Phase 4 | JiaoZiPi 清单、主页加载和主题选择 | 未开始 | JiaoZiPi 可启动并读取 Baojiaozi 主页描述 |
@@ -136,3 +136,37 @@ ctest --test-dir build/dev --output-on-failure
 | 日期 | 阶段 | 内容 |
 |---|---|---|
 | 2026-10-01 | Phase 0 | 创建 Baojiaozi 仓库，加入 ImGui 和 GLFW 子模块，建立开发文档 |
+| 2026-10-01 | Phase 1 | 建立文档模型、项目目录解析、节点 ID 校验和默认主题示例 |
+
+## 10. Phase 1 记录
+
+状态：已完成。
+
+已完成：
+
+- 加入 nlohmann/json 3.12.0 子模块。
+- 建立 `Node`、`PageDocument`、`ComponentDocument`、`ThemeDocument`、`ManifestDocument` 和 `ProjectDocument`。
+- 支持读取 `project.json`、`theme.json`、`manifest.snapshot.json`、`pages/*.json` 和 `components/*.json`。
+- 支持基础节点类型：`box`、`text`、`image`、`button`、`horizontal`、`vertical`、`component`。
+- 对必填字段、节点类型、属性对象、动画引用、绑定对象和子节点数组进行校验。
+- 对页面、组件和节点 ID 做重复检查。
+- 对目录文件进行排序后加载，保证页面和组件顺序稳定。
+- 增加错误级别、源文件和 JSON 路径诊断信息。
+- 增加 `resources/examples/default_theme` 示例项目。
+
+完成日期：2026-10-01。
+
+验证结果：
+
+- 项目目录加载成功。
+- 页面节点树解析成功。
+- 非法控件类型能够产生错误诊断并使加载失败。
+- `cmake --build build/dev -j4` 成功。
+- `ctest --test-dir build/dev --output-on-failure`：1/1 通过。
+
+当前限制：
+
+- 当前只解析 JSON 文档，不负责布局和渲染。
+- `animations` 和 `bindings` 目前保留为结构化数据，尚未执行。
+- 清单动作和页面引用尚未验证是否存在。
+- 尚未实现项目文件写回。
