@@ -100,6 +100,19 @@ std::optional<Node> ParseNode(const Json& value,
             node.animations.emplace(key, animation.get<std::string>());
         }
     }
+    if (value.contains("states")) {
+        if (!value.at("states").is_object()) {
+            Error(diagnostics, source, path + "/states", "必须是对象");
+            return std::nullopt;
+        }
+        for (const auto& [stateName, stateProperties] : value.at("states").items()) {
+            if (!stateProperties.is_object()) {
+                Error(diagnostics, source, path + "/states/" + stateName, "状态必须包含属性对象");
+                return std::nullopt;
+            }
+            node.states.emplace(stateName, stateProperties);
+        }
+    }
     if (value.contains("bindings")) {
         if (!value.at("bindings").is_object()) {
             Error(diagnostics, source, path + "/bindings", "必须是对象");

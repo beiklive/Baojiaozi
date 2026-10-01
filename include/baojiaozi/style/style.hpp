@@ -28,6 +28,8 @@ public:
 
     [[nodiscard]] VisualStyle Resolve(document::NodeType type,
                                       const std::string& styleId) const;
+    [[nodiscard]] VisualStyle ApplyOverrides(VisualStyle base,
+                                             const document::Json& properties) const;
 
 private:
     [[nodiscard]] Color ResolveColor(const document::Json& value,

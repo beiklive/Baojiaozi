@@ -6,6 +6,7 @@
 #include "baojiaozi/version.hpp"
 
 #include <cassert>
+#include <algorithm>
 #include <filesystem>
 #include <fstream>
 
@@ -60,7 +61,8 @@ int main() {
             "type": "vertical",
             "children": [
                 {"id": "title", "type": "text", "properties": {"text": "JiaoZiPi"}},
-                {"id": "open_library", "type": "button", "properties": {"text": "游戏库"}}
+                {"id": "open_library", "type": "button", "properties": {"text": "游戏库"},
+                 "states": {"focused": {"background": "#67A7F2", "cornerRadius": 10}}}
             ]
         }
     })");
@@ -81,12 +83,32 @@ int main() {
     assert(view.root.bounds.width == 800.0f);
     assert(view.root.children.front().bounds.width == 800.0f);
     assert(view.root.children.front().bounds.height == 32.0f);
+    const auto focusedView = runtime.BuildPage("home", {0.0f, 0.0f, 800.0f, 500.0f}, {"focus", 0.0f});
+    assert(focusedView.root.children[1].style.background.g > 0.6f);
     std::string saveError;
     assert(baojiaozi::designer::ProjectStore::SavePage(*result.project, "home", root, saveError));
     assert(std::filesystem::is_regular_file(root / "pages/home.json"));
     const auto blueprint = baojiaozi::designer::BuildBlueprint(result.project->pages.front().root);
-    assert(blueprint.nodes.size() == 3);
-    assert(blueprint.links.size() == 2);
+    const auto controlCount = std::count_if(blueprint.nodes.begin(), blueprint.nodes.end(), [](const auto& node) {
+        return node.kind == baojiaozi::designer::BlueprintNodeKind::Control;
+    });
+    const auto stateLinkCount = std::count_if(blueprint.links.begin(), blueprint.links.end(), [](const auto& link) {
+        return link.kind == baojiaozi::designer::BlueprintLinkKind::State;
+    });
+    const auto propertyLinkCount = std::count_if(blueprint.links.begin(), blueprint.links.end(), [](const auto& link) {
+        return link.kind == baojiaozi::designer::BlueprintLinkKind::Property;
+    });
+    const auto stateCount = std::count_if(blueprint.nodes.begin(), blueprint.nodes.end(), [](const auto& node) {
+        return node.kind == baojiaozi::designer::BlueprintNodeKind::State;
+    });
+    const auto propertyCount = std::count_if(blueprint.nodes.begin(), blueprint.nodes.end(), [](const auto& node) {
+        return node.kind == baojiaozi::designer::BlueprintNodeKind::Property;
+    });
+    assert(controlCount == 3);
+    assert(stateLinkCount == 3);
+    assert(propertyLinkCount == 4);
+    assert(stateCount == 3);
+    assert(propertyCount == 4);
 
     WriteFile(root / "pages/broken.json", R"({"id":"broken","root":{"id":"bad","type":"not_a_control"}})");
     const auto broken = loader.LoadDirectory(root);

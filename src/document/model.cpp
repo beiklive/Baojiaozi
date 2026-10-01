@@ -35,6 +35,7 @@ Json SerializeNode(const Node& node) {
     };
     if (!node.style.empty()) result["style"] = node.style;
     if (!node.animations.empty()) result["animations"] = node.animations;
+    if (!node.states.empty()) result["states"] = node.states;
     if (!node.bindings.empty()) result["bindings"] = node.bindings;
     if (!node.children.empty()) {
         result["children"] = Json::array();

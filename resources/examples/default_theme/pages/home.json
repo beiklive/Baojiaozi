@@ -23,6 +23,12 @@
         "type": "button",
         "properties": {"text": "游戏库"},
         "style": "button.primary",
+        "states": {
+          "focused": {"background": "#67A7F2", "cornerRadius": 10},
+          "triggered": {"background": "#2E6CAD", "cornerRadius": 4},
+          "blurred": {"background": "#4A90E2"},
+          "disabled": {"background": "#555B64", "textColor": "#B7BBC2"}
+        },
         "bindings": {
           "onTrigger": {"action": "navigate.page", "pageId": "library"}
         },

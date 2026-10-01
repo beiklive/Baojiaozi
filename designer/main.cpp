@@ -40,6 +40,88 @@ bool LoadFonts() {
     return true;
 }
 
+ImU32 BlueprintNodeColor(baojiaozi::designer::BlueprintNodeKind kind) {
+    using baojiaozi::designer::BlueprintNodeKind;
+    switch (kind) {
+    case BlueprintNodeKind::Control: return IM_COL32(31, 124, 143, 255);
+    case BlueprintNodeKind::State: return IM_COL32(116, 82, 156, 255);
+    case BlueprintNodeKind::Property: return IM_COL32(155, 91, 39, 255);
+    }
+    return IM_COL32(80, 86, 96, 255);
+}
+
+ImU32 BlueprintLinkColor(baojiaozi::designer::BlueprintLinkKind kind) {
+    using baojiaozi::designer::BlueprintLinkKind;
+    switch (kind) {
+    case BlueprintLinkKind::Child: return IM_COL32(53, 207, 200, 255);
+    case BlueprintLinkKind::State: return IM_COL32(186, 119, 233, 255);
+    case BlueprintLinkKind::Property: return IM_COL32(242, 174, 71, 255);
+    }
+    return IM_COL32(220, 224, 232, 255);
+}
+
+void DrawBlueprintCanvas(const baojiaozi::designer::BlueprintDocument& blueprint) {
+    constexpr float nodeWidth = 220.0f;
+    const ImVec2 available = ImGui::GetContentRegionAvail();
+    const ImVec2 canvasSize(std::max(available.x, 900.0f), std::max(available.y, 520.0f));
+    const ImVec2 origin = ImGui::GetCursorScreenPos();
+    ImGui::InvisibleButton("##blueprint_canvas", canvasSize);
+    ImDrawList* draw = ImGui::GetWindowDrawList();
+    const ImVec2 canvasMax(origin.x + canvasSize.x, origin.y + canvasSize.y);
+    draw->AddRectFilled(origin, canvasMax, IM_COL32(17, 23, 31, 255));
+    draw->PushClipRect(origin, canvasMax, true);
+    for (float x = 0.0f; x < canvasSize.x; x += 24.0f) {
+        draw->AddLine({origin.x + x, origin.y}, {origin.x + x, canvasMax.y}, IM_COL32(25, 34, 45, 255));
+    }
+    for (float y = 0.0f; y < canvasSize.y; y += 24.0f) {
+        draw->AddLine({origin.x, origin.y + y}, {canvasMax.x, origin.y + y}, IM_COL32(25, 34, 45, 255));
+    }
+
+    auto findNode = [&](const std::string& id) -> const baojiaozi::designer::BlueprintNode* {
+        const auto it = std::find_if(blueprint.nodes.begin(), blueprint.nodes.end(),
+                                     [&](const auto& node) { return node.id == id; });
+        return it == blueprint.nodes.end() ? nullptr : &*it;
+    };
+    auto nodeHeight = [](const baojiaozi::designer::BlueprintNode& node) {
+        return node.kind == baojiaozi::designer::BlueprintNodeKind::Property ? 64.0f : 58.0f;
+    };
+    for (const auto& link : blueprint.links) {
+        const auto* from = findNode(link.from);
+        const auto* to = findNode(link.to);
+        if (from == nullptr || to == nullptr) continue;
+        const ImVec2 a(origin.x + from->x + nodeWidth, origin.y + from->y + nodeHeight(*from) * 0.5f);
+        const ImVec2 b(origin.x + to->x, origin.y + to->y + nodeHeight(*to) * 0.5f);
+        const float bend = std::max(42.0f, std::abs(b.x - a.x) * 0.45f);
+        draw->AddBezierCubic(a, {a.x + bend, a.y}, {b.x - bend, b.y}, b,
+                            BlueprintLinkColor(link.kind), 2.5f);
+    }
+
+    for (const auto& node : blueprint.nodes) {
+        const ImVec2 min(origin.x + node.x, origin.y + node.y);
+        const ImVec2 max(min.x + nodeWidth, min.y + nodeHeight(node));
+        draw->AddRectFilled(min, max, IM_COL32(26, 33, 44, 255), 6.0f);
+        draw->AddRectFilled(min, {max.x, min.y + 32.0f}, BlueprintNodeColor(node.kind), 6.0f);
+        draw->AddRectFilled({min.x, min.y + 26.0f}, {max.x, min.y + 32.0f}, BlueprintNodeColor(node.kind));
+        draw->AddRect(min, max, IM_COL32(85, 100, 120, 255), 6.0f, 0, 1.0f);
+        draw->AddText({min.x + 10.0f, min.y + 8.0f}, IM_COL32(245, 245, 245, 255), node.label.c_str());
+        if (node.kind == baojiaozi::designer::BlueprintNodeKind::Control) {
+            draw->AddCircleFilled({min.x, min.y + 45.0f}, 6.0f, IM_COL32(53, 207, 200, 255));
+            draw->AddText({min.x + 12.0f, min.y + 37.0f}, IM_COL32(215, 220, 230, 255),
+                          baojiaozi::document::ToString(node.controlType));
+            draw->AddCircleFilled({max.x, min.y + 45.0f}, 6.0f, IM_COL32(53, 207, 200, 255));
+        } else if (node.kind == baojiaozi::designer::BlueprintNodeKind::State) {
+            draw->AddCircleFilled({min.x, min.y + 45.0f}, 6.0f, IM_COL32(186, 119, 233, 255));
+            draw->AddText({min.x + 12.0f, min.y + 37.0f}, IM_COL32(215, 220, 230, 255), "状态");
+            draw->AddCircleFilled({max.x, min.y + 45.0f}, 6.0f, IM_COL32(242, 174, 71, 255));
+        } else {
+            const auto value = node.value.dump();
+            draw->AddCircleFilled({min.x, min.y + 45.0f}, 6.0f, IM_COL32(242, 174, 71, 255));
+            draw->AddText({min.x + 12.0f, min.y + 39.0f}, IM_COL32(190, 200, 215, 255), value.c_str());
+        }
+    }
+    draw->PopClipRect();
+}
+
 } // namespace
 
 int main() {
@@ -151,8 +233,9 @@ int main() {
 
         ImGui::SameLine();
         ImGui::BeginChild("workspace_panel", ImVec2(-260.0f, 0.0f), true);
-        if (ImGui::BeginTabBar("workspace_tabs")) {
-        if (ImGui::BeginTabItem("即时渲染")) {
+        const float workspaceHeight = ImGui::GetContentRegionAvail().y;
+        const float previewHeight = std::max(240.0f, workspaceHeight * 0.48f);
+        ImGui::BeginChild("preview_panel", ImVec2(0.0f, previewHeight), true);
         ImGui::TextUnformatted("即时渲染预览");
         ImGui::Text("当前页面：%s", activePage.c_str());
         if (ImGui::Button("普通")) {
@@ -183,29 +266,23 @@ int main() {
                 {previewEvent, previewTime});
             renderer.Render(view.root, previewOrigin);
         }
-        ImGui::EndTabItem();
-        }
+        ImGui::EndChild();
 
-        if (ImGui::BeginTabItem("蓝图")) {
-            ImGui::TextUnformatted("页面节点蓝图");
-            if (editableProject) {
-                auto pageIt = std::find_if(editableProject->pages.begin(), editableProject->pages.end(),
-                                           [&](const auto& page) { return page.id == activePage; });
-                if (pageIt != editableProject->pages.end()) {
-                    const auto blueprint = baojiaozi::designer::BuildBlueprint(pageIt->root);
-                    for (const auto& node : blueprint.nodes) {
-                        ImGui::SetCursorPos({20.0f + node.x, 50.0f + node.y});
-                        ImGui::Button(node.label.c_str(), {190.0f, 48.0f});
-                    }
-                    ImGui::SetCursorPos({20.0f, 50.0f + static_cast<float>(blueprint.nodes.size()) * 92.0f});
-                    ImGui::Text("连线: %zu", blueprint.links.size());
-                    for (const auto& link : blueprint.links) ImGui::BulletText("%s -> %s", link.from.c_str(), link.to.c_str());
-                }
+        ImGui::BeginChild("blueprint_panel", ImVec2(0.0f, 0.0f), true,
+                          ImGuiWindowFlags_AlwaysHorizontalScrollbar |
+                          ImGuiWindowFlags_AlwaysVerticalScrollbar);
+        ImGui::TextUnformatted("蓝图画布");
+        ImGui::SameLine();
+        ImGui::TextDisabled("控件 → 子控件 / 状态 → 属性");
+        ImGui::Separator();
+        if (editableProject) {
+            auto pageIt = std::find_if(editableProject->pages.begin(), editableProject->pages.end(),
+                                       [&](const auto& page) { return page.id == activePage; });
+            if (pageIt != editableProject->pages.end()) {
+                DrawBlueprintCanvas(baojiaozi::designer::BuildBlueprint(pageIt->root));
             }
-            ImGui::EndTabItem();
         }
-        ImGui::EndTabBar();
-        }
+        ImGui::EndChild();
         ImGui::EndChild();
 
         ImGui::SameLine();

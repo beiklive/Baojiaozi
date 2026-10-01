@@ -28,6 +28,13 @@ RuntimeNode Runtime::BuildNode(const document::Node& node,
     if (node.properties.value("padding", document::Json()).is_number()) {
         result.style.padding = node.properties.at("padding").get<float>();
     }
+    auto stateName = preview.event;
+    if (stateName == "focus") stateName = "focused";
+    else if (stateName == "trigger") stateName = "triggered";
+    else if (stateName == "focus_out") stateName = "blurred";
+    if (const auto state = node.states.find(stateName); state != node.states.end()) {
+        result.style = style::ThemeResolver(project_.theme).ApplyOverrides(result.style, state->second);
+    }
     const auto animationIt = node.animations.find(preview.event);
     if (animationIt != node.animations.end()) {
         const auto definitionIt = project_.animations.find(animationIt->second);

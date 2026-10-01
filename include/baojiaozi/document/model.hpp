@@ -31,6 +31,7 @@ struct Node {
     Json properties = Json::object();
     std::string style;
     std::map<std::string, std::string> animations;
+    std::map<std::string, Json> states;
     Json bindings = Json::object();
     std::vector<Node> children;
 };

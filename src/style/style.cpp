@@ -56,4 +56,16 @@ VisualStyle ThemeResolver::Resolve(const document::NodeType type,
     return result;
 }
 
+VisualStyle ThemeResolver::ApplyOverrides(VisualStyle result,
+                                          const document::Json& properties) const {
+    if (!properties.is_object()) return result;
+    if (properties.contains("background")) result.background = ResolveColor(properties.at("background"), result.background);
+    if (properties.contains("textColor")) result.textColor = ResolveColor(properties.at("textColor"), result.textColor);
+    if (properties.contains("fontSize") && properties.at("fontSize").is_number()) result.fontSize = properties.at("fontSize").get<float>();
+    if (properties.contains("cornerRadius") && properties.at("cornerRadius").is_number()) result.cornerRadius = properties.at("cornerRadius").get<float>();
+    if (properties.contains("padding") && properties.at("padding").is_number()) result.padding = properties.at("padding").get<float>();
+    if (properties.contains("gap") && properties.at("gap").is_number()) result.gap = properties.at("gap").get<float>();
+    return result;
+}
+
 } // namespace baojiaozi::style
