@@ -351,4 +351,4 @@ cmake --build build/phase5 -j4
 - 当前 macOS 会话处于锁定状态，无法完成人工窗口截图验收；窗口构建、链接和核心测试已完成。
 - JiaoZiPi 当前只渲染主页，页面跳转和核心业务接口尚未连接。
 - UI 清单当前是静态初始清单，核心注册表自动生成将在后续阶段实现。
-- `.gitmodules` 中 Baojiaozi 使用当前工作区本地 URL；发布远程仓库后必须替换为正式远程地址。
+- Baojiaozi 已发布到 `git@github.com:beiklive/Baojiaozi.git`，JiaoZiPi 的子模块应使用该正式地址。
