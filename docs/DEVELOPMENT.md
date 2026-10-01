@@ -50,8 +50,8 @@ baojiaozi_designer
 | Phase 3 | 状态系统、插值动画和预览事件 | 已完成 | 能预览基础事件和动画轨道 |
 | Phase 4 | JiaoZiPi 清单、主页加载和主题选择 | 已完成 | JiaoZiPi 可构建并读取 Baojiaozi 主页描述 |
 | Phase 5 | 设计器项目管理、Tab、属性面板和即时预览 | 已完成 | 可打开主页、编辑属性、保存并实时看到变化 |
-| Phase 6 | 最小蓝图、组件复用和依赖刷新 | 未开始 | 可创建组件、拖入页面、绑定清单动作并刷新引用 |
-| Phase 7 | 初版主页和设计器交付 | 未开始 | 独立设计器和 JiaoZiPi 主页均可构建、运行和验收 |
+| Phase 6 | 最小蓝图、组件复用和依赖刷新 | 延期 | 初版交付后实现，避免阻塞主页和设计器闭环 |
+| Phase 7 | 初版主页和设计器交付 | 已完成 | 独立设计器和 JiaoZiPi 主页均可构建 |
 
 ## 5. 固定数据模型
 
@@ -141,6 +141,7 @@ ctest --test-dir build/dev --output-on-failure
 | 2026-10-01 | Phase 3 | 增加动画文档、缓动插值、设计器事件预览按钮和动画测试 |
 | 2026-10-01 | Phase 4 | JiaoZiPi 引入 Baojiaozi 子模块，增加顶层 CMake、主页主题和 UI 清单 |
 | 2026-10-01 | Phase 5 | 增加设计器页面选择、节点树、属性检查器、运行时刷新和页面保存 |
+| 2026-10-01 | Phase 7 | 完成初版主页和设计器交付验收，Phase 6 蓝图扩展延期 |
 
 ## 10. Phase 1 记录
 
@@ -291,3 +292,63 @@ ctest --test-dir build/dev --output-on-failure
 - 当前保存只写回单个页面，不保存项目元数据、主题和动画文件。
 - 当前没有撤销、重做和未保存状态提示。
 - 当前属性编辑器只覆盖文本和字号，尚未实现通用属性 schema。
+
+## 15. Phase 6 记录
+
+状态：延期。
+
+延期原因：初版目标已经由文档解析、运行时渲染、动画预览、主页加载和属性保存组成；蓝图节点编辑、组件依赖图和动作绑定会显著扩大文档模型和交互范围，当前不应阻塞初版闭环。
+
+保留范围：
+
+- 组件文件格式已经由 Phase 1 的 `components/*.json` 预留。
+- 节点 `bindings` 已保留结构化数据。
+- `manifest.snapshot.json` 已提供动作清单输入。
+
+后续进入条件：
+
+- 设计器有稳定的撤销/重做命令系统。
+- 页面和组件引用关系有独立依赖索引。
+- 清单动作参数可以生成可编辑的节点端口。
+
+## 16. Phase 7 记录
+
+状态：已完成。
+
+交付内容：
+
+- Baojiaozi 独立仓库已初始化。
+- ImGui、GLFW 和 nlohmann/json 已作为子模块加入。
+- 文档模型、JSON 解析、诊断、主题解析、布局、运行时树、ImGui 渲染和动画播放器已实现。
+- 独立设计器可以打开默认主题项目，显示控件列表、页面列表、主页预览和属性检查器。
+- 设计器可以修改主页节点文本和字号，并保存到页面 JSON。
+- JiaoZiPi 已加入 Baojiaozi 子模块和顶层 CMake。
+- JiaoZiPi 已加载默认主题主页，并支持通过 `--theme-dir` 选择主题目录。
+- JiaoZiPi 已提供第一版 UI 清单文件。
+
+验收命令：
+
+```bash
+# Baojiaozi
+cmake -S . -B build/dev -DBAOJIAOZI_BUILD_DESIGNER=ON -DBAOJIAOZI_BUILD_TESTS=ON
+cmake --build build/dev -j4
+ctest --test-dir build/dev --output-on-failure
+
+# JiaoZiPi
+cmake -S . -B build/phase5 -DJIAOZIPI_BUILD_APP=ON
+cmake --build build/phase5 -j4
+```
+
+验收结果：
+
+- Baojiaozi 设计器构建成功。
+- Baojiaozi 核心测试 1/1 通过。
+- JiaoZiPi 前端应用链接成功。
+- 设计器和 JiaoZiPi 使用同一 Baojiaozi 子模块版本 `05a2edf`。
+
+已知限制：
+
+- 当前 macOS 会话处于锁定状态，无法完成人工窗口截图验收；窗口构建、链接和核心测试已完成。
+- JiaoZiPi 当前只渲染主页，页面跳转和核心业务接口尚未连接。
+- UI 清单当前是静态初始清单，核心注册表自动生成将在后续阶段实现。
+- `.gitmodules` 中 Baojiaozi 使用当前工作区本地 URL；发布远程仓库后必须替换为正式远程地址。
