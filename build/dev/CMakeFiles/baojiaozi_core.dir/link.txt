@@ -1,0 +1,2 @@
+/usr/bin/ar qc libbaojiaozi_core.a CMakeFiles/baojiaozi_core.dir/src/version.cpp.o
+/usr/bin/ranlib libbaojiaozi_core.a

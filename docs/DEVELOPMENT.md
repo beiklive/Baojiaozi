@@ -1,0 +1,138 @@
+# Baojiaozi 分阶段开发文档
+
+## 1. 文档目的
+
+本文档是 Baojiaozi 的唯一阶段跟踪文档。每完成一个阶段，必须同步更新：
+
+- 阶段状态
+- 实际完成的文件和接口
+- 验收结果
+- 已知限制
+- 下一阶段前置条件
+
+文档中的“完成”只表示对应验收标准已经通过，不表示整个产品完成。
+
+## 2. 产品边界
+
+Baojiaozi 为 JiaoZiPi 提供主题描述运行时和可视化设计器，负责：
+
+1. 解析页面、组件、主题和动画 JSON。
+2. 根据控件状态计算视觉属性。
+3. 根据布局描述计算控件几何位置。
+4. 使用 ImGui 渲染预览和桌面设计器。
+5. 通过接口清单引用 JiaoZiPi 或核心提供的页面、状态和动作。
+6. 在设计器中预览状态变化和动画。
+
+JiaoZiPi 或核心负责业务逻辑、页面功能、接口实现和接口清单生成。Baojiaozi 不执行任意脚本，不直接实现模拟器业务流程。
+
+## 3. 工程分层
+
+```text
+baojiaozi_core
+  document / parser / manifest / style / layout / animation / runtime / validation
+
+baojiaozi_imgui
+  ImGui renderer / input adapter / font loader / preview host
+
+baojiaozi_designer
+  project manager / asset panels / tabs / inspector / preview / blueprint / history
+```
+
+依赖方向只能从设计器到渲染层，再到核心运行时，核心运行时不能依赖设计器。
+
+## 4. 阶段计划
+
+| 阶段 | 目标 | 状态 | 完成标准 |
+|---|---|---|---|
+| Phase 0 | 仓库、依赖、构建和文档基线 | 进行中 | CMake 可配置，ImGui/GLFW 子模块存在，字体可被定位 |
+| Phase 1 | JSON 文档模型、解析器和校验器 | 未开始 | 能加载项目、组件、页面、主题和清单，并报告错误位置 |
+| Phase 2 | 运行时树、基础布局和 ImGui 渲染 | 未开始 | 能渲染 Box、Text、Image、Button、Horizontal、Vertical |
+| Phase 3 | 状态系统、插值动画和预览事件 | 未开始 | 能预览 normal/focused/pressed/disabled 和五类动画触发 |
+| Phase 4 | JiaoZiPi 清单、主页加载和主题选择 | 未开始 | JiaoZiPi 可启动并读取 Baojiaozi 主页描述 |
+| Phase 5 | 设计器项目管理、Tab、属性面板和即时预览 | 未开始 | 可打开主页、编辑属性、保存并实时看到变化 |
+| Phase 6 | 最小蓝图、组件复用和依赖刷新 | 未开始 | 可创建组件、拖入页面、绑定清单动作并刷新引用 |
+| Phase 7 | 初版主页和设计器交付 | 未开始 | 独立设计器和 JiaoZiPi 主页均可构建、运行和验收 |
+
+## 5. 固定数据模型
+
+主题项目采用以下结构：
+
+```text
+<theme>/
+  project.json
+  manifest.snapshot.json
+  theme.json
+  components/*.json
+  pages/*.json
+  animations/*.json
+  assets/
+```
+
+`manifest.snapshot.json` 记录设计器打开项目时使用的清单版本和哈希。运行时加载最新清单时必须检查兼容性，清单不兼容时禁止静默使用未知动作。
+
+## 6. 控件和状态范围
+
+第一版控件：`box`、`text`、`image`、`button`、`horizontal`、`vertical`。
+
+第一版状态：`normal`、`focused`、`pressed`、`disabled`、`hidden`。
+
+第一版触发：`enter`、`focus_in`、`trigger`、`focus_out`、`exit`。
+
+第一版插值：数值、二维向量、颜色、旋转、尺寸、透明度；缓动支持 linear、step、cubicIn、cubicOut、cubicInOut。
+
+## 7. 阶段记录规则
+
+每次阶段完成时，在对应章节补充：
+
+```text
+完成日期：YYYY-MM-DD
+变更：列出新增目标和文件
+验证：列出命令及结果
+限制：列出当前未覆盖项
+```
+
+失败的验证必须保留在记录中，不能只记录最后一次成功结果。
+
+## 8. Phase 0 记录
+
+状态：已完成。
+
+已完成：
+
+- 将工作区中的 `Baojiaozi ` 目录规范为 `Baojiaozi`。
+- 初始化独立 Git 仓库。
+- 加入 ImGui 子模块。
+- 加入 GLFW 子模块，用于桌面设计器的第一版窗口后端。
+- 保留 `resources/fonts/switch_font.ttf`、`MaterialIcons-Regular.ttf` 和 `switch_icons.ttf`。
+- 建立 `include`、`src`、`imgui`、`designer`、`tests` 和 `docs` 目录。
+
+待完成：
+
+- 顶层 CMake 已建立 `baojiaozi_core`、`baojiaozi_imgui`、`baojiaozi_designer` 和 `baojiaozi_core_tests`。
+- ImGui/GLFW 最小窗口目标已成功编译。
+- 设计器启动代码已检查 `switch_font.ttf` 和 `MaterialIcons-Regular.ttf` 的资源路径，并加载文本字体。
+- 核心冒烟测试已通过。
+
+完成日期：2026-10-01。
+
+验证命令：
+
+```bash
+cmake -S . -B build/dev -DBAOJIAOZI_BUILD_DESIGNER=ON -DBAOJIAOZI_BUILD_TESTS=ON
+cmake --build build/dev -j4
+ctest --test-dir build/dev --output-on-failure
+```
+
+验证结果：`baojiaozi_designer` 构建成功，`baojiaozi_core_tests` 通过，1/1 测试通过。
+
+当前限制：
+
+- 当前窗口仅显示工程基线状态，不加载页面 JSON。
+- Material Icons 目前只校验文件存在，图标字体合并和名称映射放在 ImGui 资源层阶段实现。
+- 当前桌面后端使用 GLFW/OpenGL3；JiaoZiPi 的平台后端尚未接入。
+
+## 9. 变更记录
+
+| 日期 | 阶段 | 内容 |
+|---|---|---|
+| 2026-10-01 | Phase 0 | 创建 Baojiaozi 仓库，加入 ImGui 和 GLFW 子模块，建立开发文档 |

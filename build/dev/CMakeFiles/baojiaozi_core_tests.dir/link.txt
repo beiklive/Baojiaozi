@@ -1,0 +1,1 @@
+/usr/bin/c++  -arch arm64 -Wl,-search_paths_first -Wl,-headerpad_max_install_names CMakeFiles/baojiaozi_core_tests.dir/tests/core_smoke.cpp.o -o baojiaozi_core_tests  libbaojiaozi_core.a

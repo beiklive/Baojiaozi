@@ -1,0 +1,9 @@
+{
+	"InstallScripts" : 
+	[
+		"/Users/beiklive/Code/C++/developing/JiaoZi_dev/Baojiaozi/build/dev/cmake_install.cmake",
+		"/Users/beiklive/Code/C++/developing/JiaoZi_dev/Baojiaozi/build/dev/third_party/glfw/cmake_install.cmake",
+		"/Users/beiklive/Code/C++/developing/JiaoZi_dev/Baojiaozi/build/dev/third_party/glfw/src/cmake_install.cmake"
+	],
+	"Parallel" : false
+}
