@@ -46,7 +46,7 @@ baojiaozi_designer
 |---|---|---|---|
 | Phase 0 | 仓库、依赖、构建和文档基线 | 进行中 | CMake 可配置，ImGui/GLFW 子模块存在，字体可被定位 |
 | Phase 1 | JSON 文档模型、解析器和校验器 | 已完成 | 能加载项目、组件、页面、主题和清单，并报告错误位置 |
-| Phase 2 | 运行时树、基础布局和 ImGui 渲染 | 未开始 | 能渲染 Box、Text、Image、Button、Horizontal、Vertical |
+| Phase 2 | 运行时树、基础布局和 ImGui 渲染 | 已完成 | 能渲染 Box、Text、Image、Button、Horizontal、Vertical |
 | Phase 3 | 状态系统、插值动画和预览事件 | 未开始 | 能预览 normal/focused/pressed/disabled 和五类动画触发 |
 | Phase 4 | JiaoZiPi 清单、主页加载和主题选择 | 未开始 | JiaoZiPi 可启动并读取 Baojiaozi 主页描述 |
 | Phase 5 | 设计器项目管理、Tab、属性面板和即时预览 | 未开始 | 可打开主页、编辑属性、保存并实时看到变化 |
@@ -137,6 +137,7 @@ ctest --test-dir build/dev --output-on-failure
 |---|---|---|
 | 2026-10-01 | Phase 0 | 创建 Baojiaozi 仓库，加入 ImGui 和 GLFW 子模块，建立开发文档 |
 | 2026-10-01 | Phase 1 | 建立文档模型、项目目录解析、节点 ID 校验和默认主题示例 |
+| 2026-10-01 | Phase 2 | 建立主题解析、运行时布局树、ImGui 基础渲染和设计器主页预览 |
 
 ## 10. Phase 1 记录
 
@@ -170,3 +171,32 @@ ctest --test-dir build/dev --output-on-failure
 - `animations` 和 `bindings` 目前保留为结构化数据，尚未执行。
 - 清单动作和页面引用尚未验证是否存在。
 - 尚未实现项目文件写回。
+
+## 11. Phase 2 记录
+
+状态：已完成。
+
+已完成：
+
+- 增加 `ThemeResolver`，支持按控件类型和命名样式解析背景色、文字色、字体大小、圆角、内边距和间距。
+- 增加 `Runtime` 和 `RuntimeNode`，将文档节点转换为可布局的运行时树。
+- 实现垂直布局和水平布局的基础尺寸计算。
+- 实现 `box`、`text`、`image`、`button`、`horizontal` 和 `vertical` 的 ImGui 绘制。
+- 设计器加载 `resources/examples/default_theme`，并在即时渲染区域显示 `home` 页面。
+- 设计器增加菜单栏、控件列表、页面列表和即时预览区域的第一版结构。
+- 增加运行时布局冒烟断言。
+
+完成日期：2026-10-01。
+
+验证结果：
+
+- `cmake --build build/dev -j4` 成功。
+- `ctest --test-dir build/dev --output-on-failure`：1/1 通过。
+- 运行时测试确认页面根节点和文本节点尺寸按布局规则计算。
+
+当前限制：
+
+- 当前渲染器使用占位矩形绘制 Image，尚未加载纹理资源。
+- Button 当前只绘制视觉外观，没有输入事件和状态切换。
+- 当前布局不支持滚动、弧形容器、尺寸约束和响应式断点。
+- 设计器窗口的人工截图验收因当前 macOS 会话处于锁定状态未完成，构建和运行时测试已通过。

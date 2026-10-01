@@ -15,6 +15,8 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/glfw EXCLUDE_FROM_ALL)
 
 add_library(baojiaozi_core STATIC
+    src/style/style.cpp
+    src/runtime/runtime.cpp
     src/document/model.cpp
     src/parser/project_loader.cpp
     src/version.cpp
@@ -26,6 +28,7 @@ target_include_directories(baojiaozi_core
 )
 
 add_library(baojiaozi_imgui STATIC
+    imgui/renderer/renderer.cpp
     third_party/imgui/imgui.cpp
     third_party/imgui/imgui_demo.cpp
     third_party/imgui/imgui_draw.cpp
@@ -36,8 +39,10 @@ add_library(baojiaozi_imgui STATIC
 )
 target_include_directories(baojiaozi_imgui
     PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui
         ${CMAKE_CURRENT_SOURCE_DIR}/third_party/imgui/backends
+        ${CMAKE_CURRENT_SOURCE_DIR}/third_party/json/include
 )
 target_link_libraries(baojiaozi_imgui PUBLIC glfw)
 

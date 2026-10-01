@@ -1,4 +1,5 @@
 #include "baojiaozi/parser/project_loader.hpp"
+#include "baojiaozi/runtime/runtime.hpp"
 #include "baojiaozi/version.hpp"
 
 #include <cassert>
@@ -57,6 +58,12 @@ int main() {
     assert(result.project->projectId == "smoke");
     assert(result.project->pages.size() == 1);
     assert(result.project->pages.front().root.children.size() == 2);
+
+    baojiaozi::runtime::Runtime runtime(*result.project);
+    const auto view = runtime.BuildPage("home", {0.0f, 0.0f, 800.0f, 500.0f});
+    assert(view.root.bounds.width == 800.0f);
+    assert(view.root.children.front().bounds.width == 800.0f);
+    assert(view.root.children.front().bounds.height == 32.0f);
 
     WriteFile(root / "pages/broken.json", R"({"id":"broken","root":{"id":"bad","type":"not_a_control"}})");
     const auto broken = loader.LoadDirectory(root);
