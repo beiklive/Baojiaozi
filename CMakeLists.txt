@@ -15,6 +15,7 @@ set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 add_subdirectory(third_party/glfw EXCLUDE_FROM_ALL)
 
 add_library(baojiaozi_core STATIC
+    src/designer/blueprint.cpp
     src/designer/project_store.cpp
     src/animation/player.cpp
     src/style/style.cpp

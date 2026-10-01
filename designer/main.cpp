@@ -4,6 +4,7 @@
 
 #include "baojiaozi/imgui/renderer.hpp"
 #include "baojiaozi/designer/project_store.hpp"
+#include "baojiaozi/designer/blueprint.hpp"
 #include "baojiaozi/parser/project_loader.hpp"
 #include "baojiaozi/runtime/runtime.hpp"
 
@@ -58,6 +59,7 @@ int main() {
         std::cerr << "Failed to create the designer window\n";
         return 1;
     }
+    glfwMaximizeWindow(window);
 
     glfwMakeContextCurrent(window);
     glfwSwapInterval(1);
@@ -117,7 +119,14 @@ int main() {
             ImGui::EndMainMenuBar();
         }
 
-        ImGui::Begin("Baojiaozi Designer");
+        const ImGuiViewport* mainViewport = ImGui::GetMainViewport();
+        ImGui::SetNextWindowPos(mainViewport->WorkPos);
+        ImGui::SetNextWindowSize(mainViewport->WorkSize);
+        constexpr ImGuiWindowFlags fullWindowFlags =
+            ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse |
+            ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove |
+            ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+        ImGui::Begin("Baojiaozi Designer", nullptr, fullWindowFlags);
         ImGui::TextUnformatted("Baojiaozi Default Theme");
         ImGui::Text("Fonts: %s", fontsLoaded ? "loaded" : "missing");
         ImGui::Separator();
@@ -141,9 +150,11 @@ int main() {
         ImGui::EndChild();
 
         ImGui::SameLine();
-        ImGui::BeginChild("preview_panel", ImVec2(-260.0f, 0.0f), true);
+        ImGui::BeginChild("workspace_panel", ImVec2(-260.0f, 0.0f), true);
+        if (ImGui::BeginTabBar("workspace_tabs")) {
+        if (ImGui::BeginTabItem("即时渲染")) {
         ImGui::TextUnformatted("即时渲染预览");
-        ImGui::TextUnformatted("当前页面：主页");
+        ImGui::Text("当前页面：%s", activePage.c_str());
         if (ImGui::Button("普通")) {
             previewEvent = "normal";
             previewTime = 0.0f;
@@ -171,6 +182,29 @@ int main() {
                 activePage, {0.0f, 0.0f, previewSize.x, previewSize.y},
                 {previewEvent, previewTime});
             renderer.Render(view.root, previewOrigin);
+        }
+        ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("蓝图")) {
+            ImGui::TextUnformatted("页面节点蓝图");
+            if (editableProject) {
+                auto pageIt = std::find_if(editableProject->pages.begin(), editableProject->pages.end(),
+                                           [&](const auto& page) { return page.id == activePage; });
+                if (pageIt != editableProject->pages.end()) {
+                    const auto blueprint = baojiaozi::designer::BuildBlueprint(pageIt->root);
+                    for (const auto& node : blueprint.nodes) {
+                        ImGui::SetCursorPos({20.0f + node.x, 50.0f + node.y});
+                        ImGui::Button(node.label.c_str(), {190.0f, 48.0f});
+                    }
+                    ImGui::SetCursorPos({20.0f, 50.0f + static_cast<float>(blueprint.nodes.size()) * 92.0f});
+                    ImGui::Text("连线: %zu", blueprint.links.size());
+                    for (const auto& link : blueprint.links) ImGui::BulletText("%s -> %s", link.from.c_str(), link.to.c_str());
+                }
+            }
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
         }
         ImGui::EndChild();
 

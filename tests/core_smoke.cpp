@@ -2,6 +2,7 @@
 #include "baojiaozi/runtime/runtime.hpp"
 #include "baojiaozi/animation/player.hpp"
 #include "baojiaozi/designer/project_store.hpp"
+#include "baojiaozi/designer/blueprint.hpp"
 #include "baojiaozi/version.hpp"
 
 #include <cassert>
@@ -83,6 +84,9 @@ int main() {
     std::string saveError;
     assert(baojiaozi::designer::ProjectStore::SavePage(*result.project, "home", root, saveError));
     assert(std::filesystem::is_regular_file(root / "pages/home.json"));
+    const auto blueprint = baojiaozi::designer::BuildBlueprint(result.project->pages.front().root);
+    assert(blueprint.nodes.size() == 3);
+    assert(blueprint.links.size() == 2);
 
     WriteFile(root / "pages/broken.json", R"({"id":"broken","root":{"id":"bad","type":"not_a_control"}})");
     const auto broken = loader.LoadDirectory(root);
